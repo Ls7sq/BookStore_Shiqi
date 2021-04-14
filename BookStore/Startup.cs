@@ -29,12 +29,11 @@ namespace BookStore
                        
             services.AddDbContextPool<AppDbContext>
                 (
-                    option => option.UseSqlServer(Configuration.GetConnectionString("Team5BookStoreDBConnection"))
+                    option => option.UseLazyLoadingProxies().UseSqlServer(Configuration.GetConnectionString("Team5"))
                 );
 
-            services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
-
             services.AddScoped<IBookRepository, SQLBookRepository>();
+            services.AddScoped<ICustomerRepository, SQLCustomerRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

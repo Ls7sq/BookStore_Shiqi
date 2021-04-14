@@ -4,6 +4,15 @@
     ViewBag.Title = "Home Page";
 }
 
+@*Search layout
+    <form  method="get" asp-controller="home" asp-action="search">
+    <div class="input-group">
+        <input class="form-control" />
+        <div class="input-group-append">
+            <button type="submit" class="btn btn-success">search</button>
+        </div>
+    </div>
+</form>*@
 
 <div class="card-deck">
     @foreach (var book in Model)
@@ -23,7 +32,7 @@
             </div>
 
             <div class="card-footer text-center">
-                <a asp-controller="" asp-action="" asp-route-id="@book.Id"
+                <a asp-controller="home" asp-action="add" asp-route-id="@book.Id"
                    class="btn btn-primary m-1">Add to Cart</a>
 
             </div>

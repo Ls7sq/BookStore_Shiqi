@@ -38,6 +38,16 @@ namespace BookStore.Models
                         Image = "1.png"
                     }
                 );
+
+            //modelBuilder.Entity<Customer>().HasData
+            //    (
+            //        new Customer
+            //        {
+            //            Id = 1,
+            //            UserName = "team5",
+            //            Password = "123456"
+            //        }
+            //    );;
         }
     }
 }

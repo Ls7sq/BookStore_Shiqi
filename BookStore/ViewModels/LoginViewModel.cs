@@ -8,6 +8,7 @@ namespace BookStore.ViewModels
 {
     public class LoginViewModel
     {
+     
         [Required]
         [MaxLength(20, ErrorMessage = "Name cannot exceed 20 characters")]
         public string UserName { get; set; }
@@ -18,5 +19,7 @@ namespace BookStore.ViewModels
 
         [Display(Name = "Remember me")]
         public bool RememberMe { get; set; }
+
+
     }
 }

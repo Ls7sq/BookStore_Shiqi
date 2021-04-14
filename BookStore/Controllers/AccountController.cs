@@ -11,14 +11,13 @@ namespace BookStore.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly UserManager<IdentityUser> userManager;
-        private readonly SignInManager<IdentityUser> signInManager;
+        private readonly AppDbContext appDbContext;
+        private readonly ICustomerRepository customerRepository;
 
-        public AccountController(UserManager<IdentityUser> userManager,
-                                SignInManager<IdentityUser> signInManager)
+        public AccountController(AppDbContext appDbContext, ICustomerRepository customerRepository)
         {
-            this.userManager = userManager;
-            this.signInManager = signInManager;
+            this.appDbContext = appDbContext;
+            this.customerRepository = customerRepository;
         }
 
         public IActionResult Login()
@@ -27,33 +26,46 @@ namespace BookStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model, string ReturnUrl)
+        public IActionResult Login(LoginViewModel model)
         {
-            if (ModelState.IsValid)
+            Customer customer = appDbContext.Customers.FirstOrDefault(x => 
+                                x.UserName == model.UserName && x.Password == model.Password);
+
+            if (customer == null)
             {
-                var result = await signInManager.PasswordSignInAsync(model.UserName, model.Password
-                                                    , model.RememberMe, false);
-                if (result.Succeeded)
-                {
-                    if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
-                    {
-                        return LocalRedirect(ReturnUrl);
-                    }
-                    else
-                    {
-                        return RedirectToAction("index", "home");
-                    }
-                }
-                ModelState.AddModelError(string.Empty, "Invalid Login Attempt");
+                ViewData["errMsg"] = "Invalid Login Attempt";
+                return View("Login");
             }
-            return View(model);
+            else
+            {
+                Session session = new Session()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Customer = customer
+                };
+
+                appDbContext.Sessions.Add(session);
+
+                appDbContext.SaveChanges();
+
+                Response.Cookies.Append("sessionId", session.Id);
+
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         [HttpPost]
-        public async Task<IActionResult> Logout()
+        public IActionResult Logout()
         {
-            await signInManager.SignOutAsync();
-            return RedirectToAction("index", "home");
+            string sessionId = HttpContext.Request.Cookies["sessionId"];
+
+            appDbContext.Sessions.Remove(new Session() { Id = sessionId });
+
+            appDbContext.SaveChanges();
+
+            HttpContext.Response.Cookies.Delete("sessionId");
+
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
@@ -63,45 +75,46 @@ namespace BookStore.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public IActionResult Register(RegisterViewModel model)
         {
+            Customer customer = appDbContext.Customers.FirstOrDefault(x =>
+                    x.UserName == model.UserName);
 
-            if (ModelState.IsValid)
+            if (customer != null)
             {
-                var user = new IdentityUser
-                {
-                    UserName = model.UserName
-                };
-
-                var result = await userManager.CreateAsync(user, model.Password);
-
-                if (result.Succeeded)
-                {
-                    await signInManager.SignInAsync(user, isPersistent: false);
-                    return RedirectToAction("index", "home");
-                }
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError("", error.Description);
-                }
-            }
-            return View(model);
-        }
-
-        [HttpPost]
-        [HttpGet]
-        public async Task<IActionResult> IsUserNameInUse(string username)
-        {
-            var user = await userManager.FindByNameAsync(username);
-
-            if (user == null)
-            {
-                return Json(true);
+                ViewData["errMsg"] = "Current UserName: " + model.UserName + " is already in use";
+                return View();
             }
             else
             {
+                Customer cstmr = new Customer()
+                {
+                    UserName = model.UserName,
+                    Password = model.Password
+                };
+                customerRepository.Add(cstmr);
+            }
+
+            return RedirectToAction("Login", "Account");
+
+        }
+
+
+        //Do Not Use
+        [HttpPost]
+        [HttpGet]
+        public IActionResult IsUserNameInUse(string username)
+        {
+            var user = appDbContext.Customers.FirstOrDefault(x=>x.UserName == username);
+
+            if (user != null)
+            {
                 return Json($"UserName {username} is already in use");
+                
+            }
+            else
+            {
+                return Json(true);
             }
         }
     }
