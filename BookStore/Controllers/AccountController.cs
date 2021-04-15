@@ -22,7 +22,15 @@ namespace BookStore.Controllers
 
         public IActionResult Login()
         {
-            return View();
+            string sessionId = HttpContext.Request.Cookies["sessionId"];
+            if (sessionId != null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return View();
+            }
         }
 
         [HttpPost]
@@ -71,7 +79,15 @@ namespace BookStore.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            return View();
+            string sessionId = HttpContext.Request.Cookies["sessionId"];
+            if (sessionId != null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                return View();
+            }
         }
 
         [HttpPost]
